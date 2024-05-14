@@ -2,7 +2,8 @@
 #include <matrix.h>
 
 int main(){
-    matrix m(1000,1000);
-    std::cout << "Hello World!\n";
+    matrix m;
+    m.cut([](int x){return x*x/1000;},[](int x){return 0;});
+    m.output("./1.bmp");
     return 0;
 }
