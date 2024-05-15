@@ -112,6 +112,7 @@ double matrix::calculate_direction(drone & _drone){
     pos & _pos = _drone.getPos();
     int cnt = 0;
     double angle_sum = 0.0;
+    return 0.0;
 }
 
 void matrix::step_forward()

@@ -7,3 +7,16 @@ CMakeCache.txt
 Makefile
 bin/
 *.bmp
+
+.vs/
+ALL_BUILD.vcxproj
+ALL_BUILD.vcxproj.filters
+ALL_BUILD.vcxproj.user
+UAV.sln
+ZERO_CHECK.vcxproj
+ZERO_CHECK.vcxproj.filters
+main.dir/
+main.vcxproj
+main.vcxproj.filters
+main.vcxproj.user
+x64/
