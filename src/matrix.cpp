@@ -135,33 +135,86 @@ void matrix::clearAll()
     }
 }
 
+// double matrix::calculate_direction(drone &_drone)
+// {
+//     pos &_pos = _drone.getPos();
+//     int cnt = 0;
+//     double angle_sum = 0.0;
+//     int left = _pos.x - this->r2, right = _pos.x + this->r2;
+//     for (int x = left; x <= right; x++)
+//     {
+//         int dx = x - _pos.x;
+//         int c = std::ceil(std::sqrt(this->r2 * this->r2 - dx * dx));
+//         int bottom = _pos.y - c, top = _pos.y + c;
+//         for (int y = bottom; y <= top; y++)
+//         {
+//             int dy = y - _pos.y;
+//             int distance = std::ceil(std::sqrt(dx * dx + dy * dy));
+//             if (distance > r1)
+//             {
+//                 cnt++;
+//                 if (x > 0 && x < this->width && y > 0 && y < this->height)
+//                 {
+//                     if (!this->map[y][x])
+//                         angle_sum += std::atan2(dy, dx);
+//                 }
+//             }
+//         }
+//     }
+//     return angle_sum / cnt;
+// }
+
 double matrix::calculate_direction(drone &_drone)
 {
     pos &_pos = _drone.getPos();
-    int cnt = 0;
-    double angle_sum = 0.0;
-    int left = _pos.x - this->r2, right = _pos.x + this->r2;
-    for (int x = left; x <= right; x++)
+    double angle_max = 0.0;
+    double income_max = 0.0;
+    int q = 12;
+    for (int i = 0; i <= q; i++)
     {
-        int dx = x - _pos.x;
-        int c = std::ceil(std::sqrt(this->r2 * this->r2 - dx * dx));
-        int bottom = _pos.y - c, top = _pos.y + c;
-        for (int y = bottom; y <= top; y++)
+        double angle = M_PI * (2.0 * i / q - 1.0);
+        double income = 0.0;
+        int mx = (int)(_pos.x + std::cos(angle) * this->speed*3 + 0.5);
+        int my = (int)(_pos.y + std::sin(angle) * this->speed*3 + 0.5);
+        int left = mx - this->r2, right = mx + this->r2;
+        for (int x = left; x <= right; x++)
         {
-            int dy = y - _pos.y;
-            int distance = std::ceil(std::sqrt(dx * dx + dy * dy));
-            if (distance > r1)
+            int dx = x - mx;
+            int c = std::ceil(std::sqrt(this->r2 * this->r2 - dx * dx));
+            int bottom = my - c, top = my + c;
+            for (int y = bottom; y <= top; y++)
             {
-                cnt++;
                 if (x > 0 && x < this->width && y > 0 && y < this->height)
                 {
-                    if (!this->map[y][x])
-                        angle_sum += std::atan2(dy, dx);
+                    if (!this->map[y][x]) continue;
                 }
+                income += 0.2;
             }
         }
+        left = mx - this->r1, right = mx + this->r1;
+        for (int x = left; x <= right; x++)
+        {
+            int dx = x - mx;
+            int c = std::ceil(std::sqrt(this->r1 * this->r1 - dx * dx));
+            int bottom = my - c, top = my + c;
+            for (int y = bottom; y <= top; y++)
+            {
+                if (x > 0 && x < this->width && y > 0 && y < this->height)
+                {
+                    if (!this->map[y][x]){
+                        income += 1.0;
+                        continue;
+                    }
+                }
+                income -= 0.2;
+            }
+        }
+        if(income > income_max){
+            income_max = income;
+            angle_max = angle;
+        }
     }
-    return angle_sum / cnt;
+    return angle_max;
 }
 
 void matrix::step_forward(int steps)
@@ -172,6 +225,7 @@ void matrix::step_forward(int steps)
         {
             this->clear(drone);
             double direction = this->calculate_direction(drone);
+            double temp = std::sin(direction);
             drone.move(std::cos(direction) * this->speed, std::sin(direction) * this->speed);
         }
     }

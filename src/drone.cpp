@@ -1,6 +1,5 @@
 #include <drone.h>
 #include <cstring>
-#include <cmath>
 
 drone::drone(int number){
     this->number = number;
@@ -29,7 +28,7 @@ void drone::setPos(int x,int y){
 }
 
 void drone::move(double dx,double dy){
-    this->_pos.x += std::ceil(dx);
-    this->_pos.y += std::ceil(dy);
+    this->_pos.x += int(dx+0.5);
+    this->_pos.y += int(dy+0.5);
     this->path.push_back(this->_pos);
 }
