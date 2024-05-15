@@ -1,6 +1,8 @@
 #include <matrix.h>
 #include <cstring>
 #include <bmp.h>
+#include <iostream>
+#include <pos.h>
 
 matrix::matrix()
 {
@@ -9,6 +11,7 @@ matrix::matrix()
     this->map = new char *[MATRIX_HEIGHT_DEFAULT];
     this->r1 = RADIUS_DEFAULT;
     this->r2 = RADIUS_DEFAULT_EXPAND;
+    this->speed = MATRIX_SPEED_DEFAULT;
     for (int i = 0; i < MATRIX_HEIGHT_DEFAULT; i++)
     {
         this->map[i] = new char[MATRIX_WIDTH_DEFAULT];
@@ -16,13 +19,14 @@ matrix::matrix()
     }
 }
 
-matrix::matrix(const int width, const int height, double r1, double r2)
+matrix::matrix(const int width, const int height, double r1, double r2, int speed)
 {
     this->width = width;
     this->height = height;
     this->r1 = r1;
     this->r2 = r2;
     this->map = new char *[height];
+    this->speed = speed;
     for (int i = 0; i < height; i++)
     {
         this->map[i] = new char[width];
@@ -55,7 +59,14 @@ void matrix::addDrone()
     this->drones.push_back(drone_t);
 }
 
-char matrix::at(int x,int y){
+void matrix::addDrone(const pos &_pos)
+{
+    drone drone_t(this->drones.size(), _pos);
+    this->drones.push_back(drone_t);
+}
+
+char matrix::at(int x, int y)
+{
     return this->map[y][x];
 }
 
@@ -65,8 +76,10 @@ void matrix::cut(std::function<int(int)> const &top, const std::function<int(int
     {
         int _bottom = bottom(i);
         int _top = top(i);
-        if(_bottom < 0) _bottom = 0;
-        if(_top >= this->height) _top = this->height - 1;
+        if (_bottom < 0)
+            _bottom = 0;
+        if (_top >= this->height)
+            _top = this->height - 1;
         for (int j = _bottom; j <= _top; j++)
         {
             this->map[i][j] = 1;
@@ -74,57 +87,104 @@ void matrix::cut(std::function<int(int)> const &top, const std::function<int(int
     }
 }
 
-void matrix::cut(std::function<int(int)> const &top, const std::function<int(int)> &bottom,int start,int end)
+void matrix::cut(std::function<int(int)> const &top, const std::function<int(int)> &bottom, int start, int end)
 {
-    if(end > this->width || start < 0) return;
+
+    if (end >= this->width)
+        end = this->width - 1;
+    if (start < 0)
+        start = 0;
     for (int i = start; i <= end; i++)
     {
         int _bottom = bottom(i);
         int _top = top(i);
-        if(_bottom < 0) _bottom = 0;
-        if(_top >= this->height) _top = this->height - 1;
+        if (_bottom < 0)
+            _bottom = 0;
+        if (_top >= this->height)
+            _top = this->height - 1;
         for (int j = _bottom; j <= _top; j++)
         {
-            this->map[i][j] = 1;
+            this->map[j][i] = 1;
         }
     }
 }
 
-void matrix::clear(drone & _drone)
+void matrix::clear(drone &_drone)
 {
     pos &_pos = _drone.getPos();
     int r1 = this->r1;
     this->cut(
-        [&_pos,r1](int x) -> int
+        [&_pos, r1](int x) -> int
         {
             int d = _pos.x-x;
-            int y = _pos.y + (int)std::sqrt(r1*r1-d*d);
-            return y;},
-        [&_pos,r1](int x) -> int
+            int y = _pos.y + std::ceil(std::sqrt(r1*r1-d*d));
+            return y; },
+        [&_pos, r1](int x) -> int
         {
             int d = _pos.x-x;
-            int y = _pos.y - (int)std::sqrt(r1*r1-d*d);
-            return y;},
-        _pos.x - r1,_pos.x + r1);
+            int y = _pos.y - std::ceil(std::sqrt(r1*r1-d*d));
+            return y; },
+        _pos.x - r1, _pos.x + r1);
 }
 
-double matrix::calculate_direction(drone & _drone){
-    pos & _pos = _drone.getPos();
+void matrix::clearAll()
+{
+    for (drone &x : this->drones)
+    {
+        this->clear(x);
+    }
+}
+
+double matrix::calculate_direction(drone &_drone)
+{
+    pos &_pos = _drone.getPos();
     int cnt = 0;
     double angle_sum = 0.0;
-    return 0.0;
+    int left = _pos.x - this->r2, right = _pos.x + this->r2;
+    for (int x = left; x <= right; x++)
+    {
+        int dx = x - _pos.x;
+        int c = std::ceil(std::sqrt(this->r2 * this->r2 - dx * dx));
+        int bottom = _pos.y - c, top = _pos.y + c;
+        for (int y = bottom; y <= top; y++)
+        {
+            int dy = y - _pos.y;
+            int distance = std::ceil(std::sqrt(dx * dx + dy * dy));
+            if (distance > r1)
+            {
+                cnt++;
+                if (x > 0 && x < this->width && y > 0 && y < this->height)
+                {
+                    if (!this->map[y][x])
+                        angle_sum += std::atan2(dy, dx);
+                }
+            }
+        }
+    }
+    return angle_sum / cnt;
 }
 
-void matrix::step_forward()
+void matrix::step_forward(int steps)
 {
-    for (auto &i : this->drones)
+    for (int i = 0; i < steps; i++)
     {
-        double direction = this->calculate_direction(i);
+        for (auto &drone : this->drones)
+        {
+            this->clear(drone);
+            double direction = this->calculate_direction(drone);
+            drone.move(std::cos(direction) * this->speed, std::sin(direction) * this->speed);
+        }
     }
     return;
 }
 
-void matrix::output(const char* filename){
-    bmp _bmp(this->map,this->width,this->height);
+void matrix::output(const char *filename)
+{
+    bmp _bmp(this->map, this->width, this->height);
+    const int length = this->drones.size();
+    for (int i = 0; i < length; i++)
+    {
+        _bmp.draw(this->drones[i].path, 1.0 * (i + 1) / length);
+    }
     _bmp.exports(filename);
 }

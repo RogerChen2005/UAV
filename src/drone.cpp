@@ -2,27 +2,17 @@
 #include <cstring>
 #include <cmath>
 
-double pos::dist(pos& _pos){
-    int dx = this->x - _pos.x;
-    int dy = this->y - _pos.y;
-    return std::sqrt(dx*dx + dy*dy);
-}
-
-double pos::dist(int x,int y){
-    int dx = this->x - x;
-    int dy = this->y - y;
-    return std::sqrt(dx*dx + dy*dy);
-}
-
 drone::drone(int number){
     this->number = number;
     this->_pos.x = 0;
     this->_pos.y = 0;
+    this->path.push_back(this->_pos);
 }
 
-drone::drone(int number,pos &_pos){
+drone::drone(int number,const pos &_pos){
     this->number = number;
     std::memcpy(&this->_pos,&_pos,sizeof(pos));
+    this->path.push_back(this->_pos);
 }
 
 pos& drone::getPos(){
@@ -38,7 +28,8 @@ void drone::setPos(int x,int y){
     this->_pos.y = y;
 }
 
-void drone::move(int dx,int dy){
-    this->_pos.x += dx;
-    this->_pos.y += dy;
+void drone::move(double dx,double dy){
+    this->_pos.x += std::ceil(dx);
+    this->_pos.y += std::ceil(dy);
+    this->path.push_back(this->_pos);
 }
