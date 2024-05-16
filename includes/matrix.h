@@ -4,12 +4,7 @@
 #include <vector>
 #include <cmath>
 #include <functional>
-
-#define MATRIX_WIDTH_DEFAULT 1000
-#define MATRIX_HEIGHT_DEFAULT 1000
-#define RADIUS_DEFAULT 5
-#define RADIUS_DEFAULT_EXPAND 7
-#define MATRIX_SPEED_DEFAULT 2
+#include <ref.h>
 
 extern int speed;
 
@@ -35,6 +30,7 @@ public:
     void cut(std::function<int(int)> const  & top, const std::function<int(int)> & bottom,int start,int end);
     void clear(drone & _drone);
     void clearAll();
-    double calculate_direction(drone &_drone);
+    void calculate_direction(drone &_drone,double* angle,int* step);
+    double calculate_region(pos& _pos,double angle,int speed);
     void output(const char* filename);
 };

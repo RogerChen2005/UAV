@@ -12,3 +12,13 @@ double pos::dist(int x,int y){
     int dy = this->y - y;
     return std::sqrt(dx*dx + dy*dy);
 }
+
+void pos::operator = (const pos& _pos){
+        this->x = _pos.x;
+        this->y = _pos.y;
+    }
+    
+void pos::operator += (const pos& _pos){
+    this->x += _pos.x;
+    this->y += _pos.y;
+}

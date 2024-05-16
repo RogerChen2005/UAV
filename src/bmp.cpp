@@ -3,32 +3,7 @@
 #include <vector>
 #include <iostream>
 #include <cstring>
-
-typedef unsigned char uint8_t;
-typedef unsigned short uint16_t;
-typedef unsigned int uint32_t;
-typedef unsigned long long uint64_t;
-
-#pragma pack(push, 1)
-struct BMPHeader {
-    uint16_t signature;
-    uint32_t fileSize;
-    uint16_t reserved1;
-    uint16_t reserved2;
-    uint32_t pixelDataOffset;
-    uint32_t dibHeaderSize;
-    uint32_t width;
-    uint32_t height;
-    uint16_t colorPlanes;
-    uint16_t bitsPerPixel;
-    uint32_t compressionMethod;
-    uint32_t imageSize;
-    uint32_t horizontalResolution;
-    uint32_t verticalResolution;
-    uint32_t colorsInPalette;
-    uint32_t importantColors;
-};
-#pragma pack(pop)
+#include <cmath>
 
 void rgb::change (const unsigned char r,const unsigned char g,const unsigned char b){
     this->r = r;
@@ -85,10 +60,28 @@ bmp::~bmp(){
     delete[] this->_data;
 }
 
+int bmp::clac_pos(int x,int y){
+    return x + y * this->width;
+}
+
 void bmp::draw(std::vector<pos>& path,double h){
+    static const int radius = 2; 
     int length = path.size();
-    for(const pos& x:path){
-        this->_data[x.x+x.y*this->width].change(255*(1-h),255*h,255*h);
+    for(const pos& _pos:path){
+        int left = _pos.x - radius, right = _pos.x + radius;
+        for (int x = left; x <= right; x++)
+        {
+            int dx = x - _pos.x;
+            int c = std::ceil(std::sqrt(radius*radius - dx * dx));
+            int bottom = _pos.y- c, top = _pos.y + c;
+            for (int y = bottom; y <= top; y++)
+            {
+                if (x > 0 && x < this->width && y > 0 && y < this->height)
+                {
+                    this->_data[clac_pos(x,y)].change(255,255*h,255*(1-h));
+                }
+            }
+        }
     }
 }
 
