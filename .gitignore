@@ -8,6 +8,7 @@ Makefile
 bin/
 *.bmp
 build/
+output/
 
 .vs/
 ALL_BUILD.vcxproj

@@ -181,8 +181,9 @@ double matrix::calculate_region(pos& _pos,double angle,int speed)
     outer_black_block -= inner_black_block;
     outer_white_block -= inner_white_block;
     outer_none_block -= inner_none_block;
-    income = 1.0 * inner_black_block + 0.5 * (outer_white_block + outer_none_block) \
-    + 0.2 * outer_black_block - 0.5 * inner_none_block;
+    // income = 1.0 * inner_black_block + 0.5 * (outer_white_block + outer_none_block) \
+    // + 0.2 * outer_black_block - 0.5 * inner_none_block;
+    income = 1.0 * inner_black_block + 0.5 * outer_black_block;
     return income;
 }
 
@@ -219,7 +220,8 @@ void matrix::calculate_direction(drone &_drone,double* angle,int* step)
     else *step = (this->speed + accelerate * (cnt-1)) / this->speed;
 }
 
-void matrix::step_forward(int steps)
+
+int matrix::step_forward(int steps)
 {
     for (int i = 0; i < steps; i++)
     {
@@ -235,7 +237,17 @@ void matrix::step_forward(int steps)
             }
         }
     }
-    return;
+    return this->calculate_coverage();
+}
+
+int matrix::calculate_coverage(){
+    int cnt = 0;
+    for(int i = 0;i < this->width;i++){
+        for(int j = 0;j < this->height;j++){
+            if(!this->map[j][i]) cnt++;
+        }
+    }
+    return cnt;
 }
 
 void matrix::output(const char *filename)
